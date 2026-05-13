@@ -127,6 +127,35 @@ function ensureComboTables(db) {
   `);
 }
 
+function ensureUpdateLogTables(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS update_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      metadata_id INTEGER NOT NULL,
+      update_time TEXT NOT NULL,
+      total_count INTEGER DEFAULT 0,
+      daily_stats TEXT,
+      status TEXT DEFAULT 'success',
+      error_message TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      duration INTEGER,
+      FOREIGN KEY (metadata_id) REFERENCES api_metadata(id)
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS batch_update_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      update_time TEXT NOT NULL,
+      total_count INTEGER DEFAULT 0,
+      success_count INTEGER DEFAULT 0,
+      error_count INTEGER DEFAULT 0,
+      duration INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 function getTableColumns(db, tableName) {
   return db.prepare(`PRAGMA table_info(${quoteIdent(tableName)})`).all().map((column) => column.name);
 }
@@ -210,6 +239,7 @@ const importConfig = db.transaction(() => {
   ensureApiMetadataTable(db);
   ensureFieldMappingTable(db);
   ensureComboTables(db);
+  ensureUpdateLogTables(db);
 
   for (const tableName of [...CONFIG_TABLES].reverse()) {
     db.prepare(`DELETE FROM ${quoteIdent(tableName)}`).run();

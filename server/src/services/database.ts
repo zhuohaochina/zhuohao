@@ -57,6 +57,35 @@ function cleanupSQLiteSidecars(targetPath: string): void {
   }
 }
 
+function ensureUpdateLogTables(connection: Database.Database): void {
+  connection.exec(`
+    CREATE TABLE IF NOT EXISTS update_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      metadata_id INTEGER NOT NULL,
+      update_time TEXT NOT NULL,
+      total_count INTEGER DEFAULT 0,
+      daily_stats TEXT,
+      status TEXT DEFAULT 'success',
+      error_message TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      duration INTEGER,
+      FOREIGN KEY (metadata_id) REFERENCES api_metadata(id)
+    )
+  `);
+
+  connection.exec(`
+    CREATE TABLE IF NOT EXISTS batch_update_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      update_time TEXT NOT NULL,
+      total_count INTEGER DEFAULT 0,
+      success_count INTEGER DEFAULT 0,
+      error_count INTEGER DEFAULT 0,
+      duration INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 /**
  * 初始化数据库
  */
@@ -110,6 +139,8 @@ export function initDatabase(): void {
   `);
 
   // 检查并添加缺失的列
+  ensureUpdateLogTables(db);
+
   const columns = getTableColumns('api_metadata');
 
   // 需要的列及其定义
