@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "config:export": "node server/scripts/config-export.js",
+    "config:import": "node server/scripts/config-import.js"
+  },
+  "dependencies": {
+    "playwright": "^1.57.0"
+  }
+}
